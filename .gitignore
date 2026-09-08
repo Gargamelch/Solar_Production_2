@@ -1,0 +1,7 @@
+Temp/
+Backup/
+data/
+__pycache__
+documentation/
+*.csv
+*.csv#
