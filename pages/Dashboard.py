@@ -1,11 +1,8 @@
 import pandas as pd
-import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import plotly.colors as pc
-import scipy.stats as stats
 import streamlit as st
-from scipy.stats import gaussian_kde
+
 
 # Load our custom module from utils.py
 from utils import (load_data, load_geojson, load_svg, svg_to_img, 
@@ -79,7 +76,7 @@ with st.sidebar:
     df_filtered = solar_prod_full_year_df[
         (solar_prod_full_year_df['Year'] >= year_min) & 
         (solar_prod_full_year_df['Year'] <= year_max)
-    ]
+    ].copy()
 
     # Apply region filter only if regions were selected and exist
     if selected_regions is not None and len(selected_regions) > 0:

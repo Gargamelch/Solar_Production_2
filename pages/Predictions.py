@@ -1,9 +1,5 @@
 import pandas as pd
-import numpy as np
-import plotly.express as px
 import plotly.graph_objects as go
-import plotly.colors as pc
-import scipy.stats as stats
 import streamlit as st
 from datetime import datetime, timedelta
 
