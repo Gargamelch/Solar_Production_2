@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # Load our custom module from utils.py
 from utils import (load_data, load_geojson, load_svg, svg_to_img, 
                     SOLAR_COLORSCALE, PRIMARY_COLOR, SECONDARY_COLOR, 
-                    DATA_PATH, APP_VERSION)
+                    DATA_PATH_PRED, DATA_PATH_PROD, APP_VERSION)
 
 
 # Custom CSS to have a clean and well placed logo branding
@@ -32,7 +32,7 @@ st.markdown("""
 # ---------------------------------------------------
 # Data loading
 # ---------------------------------------------------
-solar_prod_df = load_data()
+solar_prod_df = load_data(DATA_PATH_PRED)
 geojson = load_geojson()
 
 # Variable name for easier code readability

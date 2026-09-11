@@ -10,11 +10,13 @@ import re # SVG manipulation
 # General settings
 # ---------------------------------------------------
 
-APP_VERSION = '1.1.0'
+APP_VERSION = '1.2.0'
 
 # Constants
 GEOJSON_URL = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/regions-version-simplifiee.geojson"
-DATA_PATH = "https://huggingface.co/buckets/Gargamelch/solar_production/resolve/solar_prod_predictions.csv?download=true"
+DATA_PATH_PRED = "https://huggingface.co/buckets/Gargamelch/solar_production/resolve/solar_prod_predictions.csv?download=true"
+DATA_PATH_PROD = "https://huggingface.co/buckets/Gargamelch/solar_production/resolve/solar_production.csv?download=true"
+
 
 # Color palette
 SOLAR_COLORSCALE = [
@@ -46,10 +48,10 @@ def load_geojson():
 
 # CSV
 @st.cache_data(ttl=604800) # Cache data for 1 week
-def load_data():
+def load_data(data):
     """Load solar production prediction data."""
     try:
-        df = pd.read_csv(DATA_PATH, parse_dates=["date"])
+        df = pd.read_csv(data, parse_dates=["date"])
     except Exception as e: 
         st.error(f"Data file not found")
         return None

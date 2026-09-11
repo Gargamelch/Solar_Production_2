@@ -10,7 +10,7 @@ from scipy.stats import gaussian_kde
 # Load our custom module from utils.py
 from utils import (load_data, load_geojson, load_svg, svg_to_img, 
                     SOLAR_COLORSCALE, PRIMARY_COLOR, SECONDARY_COLOR, 
-                    DATA_PATH, APP_VERSION)
+                    DATA_PATH_PRED, DATA_PATH_PROD, APP_VERSION)
 
 
 # Custom CSS to have a clean and well placed logo branding
@@ -32,7 +32,7 @@ st.markdown("""
 # ---------------------------------------------------
 # Data loading
 # ---------------------------------------------------
-solar_prod_df = load_data()
+solar_prod_df = load_data(DATA_PATH_PROD)
 geojson = load_geojson()
 # Filtering to < 2026 (for complete years graphs)
 solar_prod_full_year_df = solar_prod_df.loc[solar_prod_df['Year'] < 2026, :]
@@ -859,7 +859,7 @@ with tab6:
     st.markdown(f"{svg_to_img('glass.svg')} **Data Preview**", unsafe_allow_html=True)
     st.dataframe(df_filtered.head(10), width='content')
     
-    st.markdown(f"{svg_to_img('download.svg')} [Download full dataset]({DATA_PATH})", unsafe_allow_html=True)
+    st.markdown(f"{svg_to_img('download.svg')} [Download full dataset]({DATA_PATH_PROD})", unsafe_allow_html=True)
 
     st.markdown(f"{svg_to_img('DB.svg')} **Sources**", unsafe_allow_html=True)
     st.markdown("""
