@@ -323,13 +323,13 @@ with tab2:
             .agg(total_TWh=("TWh", "sum"))
         )
 
-        fig_map = px.choropleth_mapbox(
+        fig_map = px.choropleth_map(
             region_prod,
             geojson=geojson,
             locations="region",
             featureidkey="properties.nom",
             color="total_TWh",
-            mapbox_style="carto-darkmatter",
+            map_style="carto-darkmatter",
             center={"lat": 46.6, "lon": 2.4},
             zoom=4.7,
             opacity=1,
@@ -368,7 +368,7 @@ with tab2:
         )
 
         fig_map.add_trace(
-            go.Scattermapbox(
+            go.Scattermap(
                 lat=region_prod["lat"],
                 lon=region_prod["lon"],
                 mode="text",
