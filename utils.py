@@ -30,6 +30,24 @@ SOLAR_COLORSCALE = [
 PRIMARY_COLOR = '#E67E22'
 SECONDARY_COLOR = '#F1C40F'
 
+
+# Regions coordinates
+REGION_COORDS = {
+    "Auvergne-Rhône-Alpes": (45.40, 4.70),
+    "Bourgogne-Franche-Comté": (47.10, 5.04),
+    "Bretagne": (48.10, -2.80),
+    "Centre-Val de Loire": (47.35, 1.68),
+    "Corse": (42.15, 9.10),
+    "Grand Est": (48.70, 5.80),
+    "Hauts-de-France": (49.90, 2.80),
+    "Île-de-France": (48.70, 2.55),
+    "Normandie": (49.00, 0.20),
+    "Nouvelle-Aquitaine": (45.20, 0.55),
+    "Occitanie": (43.70, 2.20),
+    "Pays de la Loire": (47.50, -0.80),
+    "Provence-Alpes-Côte d'Azur": (43.80, 6.10),
+}
+
 # ---------------------------------------------------
 # Cache Functions
 # ---------------------------------------------------

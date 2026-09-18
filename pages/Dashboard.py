@@ -7,7 +7,7 @@ import streamlit as st
 # Load our custom module from utils.py
 from utils import (load_data, load_geojson, load_svg, svg_to_img, 
                     SOLAR_COLORSCALE, PRIMARY_COLOR, SECONDARY_COLOR, 
-                    DATA_PATH_PRED, DATA_PATH_PROD, APP_VERSION)
+                    REGION_COORDS, DATA_PATH_PRED, DATA_PATH_PROD, APP_VERSION)
 
 
 # Custom CSS to have a clean and well placed logo branding
@@ -96,13 +96,13 @@ with st.sidebar:
                 .sum().reset_index()
                 )
 
-    solar_prod_df_geo = df_filtered.groupby('region')[['TWh']].sum().reset_index()
+    # Count days per year to detect partial years
+    days_per_year = df_filtered.groupby('Year')['date'].count()     # Count the number of days for every year
+    full_years = days_per_year[days_per_year >= 365].index.tolist() # List the full years in the dataset so growth is correct
 
-    region_prod = (df_filtered
-        .groupby('region', as_index=False)
-        .agg(total_solar_TWh=('TWh', 'sum'))
-        .sort_values('total_solar_TWh', ascending=True)
-)
+    # Options
+    HEIGHT_GRAPHS = 450
+
     # Sources
     st.markdown('<div style="font-size:0.65rem;color:#3C4460;text-align:center">RTE · Météo-France · SDES</div>', unsafe_allow_html=True)
 
@@ -186,10 +186,6 @@ with tab1:
     daily_avg        = daily_agg['total_TWh'].mean() * 1_000_000
     avg_capacity     = daily_agg['total_capacity'].mean()
 
-    # Count days per year to detect partial years
-    days_per_year = df_filtered.groupby('Year')['date'].count()     # Count the number of days for every year
-    full_years = days_per_year[days_per_year >= 365].index.tolist() # List the full years in the dataset so growth is correct
-
     if len(full_years) >= 2:    # If there's a least 2 full years selected we can calculate growth                                             
         first_year_avg = daily_agg[daily_agg['date'].dt.year == min(full_years)]['total_TWh'].mean()
         last_year_avg  = daily_agg[daily_agg['date'].dt.year == max(full_years)]['total_TWh'].mean()
@@ -234,7 +230,7 @@ with tab1:
     # Power Capacity    
     with col4:
         with st.container(border=True):
-            st.markdown(f"{svg_to_img('panel.svg')} **Average Power Capacity**", unsafe_allow_html=True)
+            st.markdown(f"{svg_to_img('panel.svg')} **Average Power Capacity (MW)**", unsafe_allow_html=True)
             st.metric(
                 label='Average Power Capacity',
                 value=f'{avg_capacity:.2f}',
@@ -250,7 +246,6 @@ with tab1:
     yearly_df['Year'] = yearly_df['date'].dt.year
 
     # Linear trend
-    HEIGHT_GRAPHS = 450
     with col1:
         st.markdown(f"**Solar Energy Production Per Year**", unsafe_allow_html=True)
 
@@ -310,13 +305,14 @@ with tab1:
 # ---------------------------------------------------
 with tab2:
 
-    st.markdown(f'**Geographical Electrical Production**', unsafe_allow_html=True)
+    st.markdown('**Geographical Electrical Production**', unsafe_allow_html=True)
+
     # Layout with map and ranking
     map_col, rank_col = st.columns([2, 1])
-    HEIGHT_2=650
+    HEIGHT_2 = 650
 
     with map_col:
-        # production by region
+        # Production by region
         region_prod = (
             df_filtered
             .groupby("region", as_index=False)
@@ -329,35 +325,17 @@ with tab2:
             locations="region",
             featureidkey="properties.nom",
             color="total_TWh",
-            map_style="carto-darkmatter",
-            center={"lat": 46.6, "lon": 2.4},
-            zoom=4.7,
+            map_style="carto-darkmatter-nolabels",
+            center={"lat": 46.9, "lon": 1.8},
+            zoom=5.1,
             opacity=1,
             color_continuous_scale=SOLAR_COLORSCALE,
             labels={"total_TWh": "Production (TWh)"}
         )
 
-        region_coords = {
-        "Auvergne-Rhône-Alpes": (45.76, 4.84),
-        "Bourgogne-Franche-Comté": (47.32, 5.04),
-        "Bretagne": (48.20, -2.93),
-        "Centre-Val de Loire": (47.75, 1.68),
-        "Corse": (42.15, 9.10),
-        "Grand Est": (48.70, 6.20),
-        "Hauts-de-France": (50.50, 2.80),
-        "Île-de-France": (48.85, 2.35),
-        "Normandie": (49.10, 0.20),
-        "Nouvelle-Aquitaine": (45.20, 0.20),
-        "Occitanie": (43.80, 2.20),
-        "Pays de la Loire": (47.50, -0.80),
-        "Provence-Alpes-Côte d'Azur": (43.95, 6.00),
-        }
-        
-        region_prod["lat"] = region_prod["region"].map(
-                    lambda x: region_coords.get(x, (None, None))[0]
-        )
-        region_prod["lon"] = region_prod["region"].map(
-                    lambda x: region_coords.get(x, (None, None))[1]
+        region_prod[["lat", "lon"]] = pd.DataFrame(
+            region_prod["region"].map(REGION_COORDS).tolist(),
+            index=region_prod.index
         )
 
         region_prod["label"] = (
@@ -373,22 +351,24 @@ with tab2:
                 lon=region_prod["lon"],
                 mode="text",
                 text=region_prod["label"],
-                textfont=dict(
-                    size=11,
-                    color="black"
-                ),
+                textfont=dict(size=11, color="black"),
                 hoverinfo="skip",
                 showlegend=False,
             )
         )
+
         fig_map.update_layout(
             height=HEIGHT_2,
             margin={"r": 0, "t": 0, "l": 0, "b": 0},
-            coloraxis_colorbar=dict(
-                title="TWh",
-                x=1.02
-                ),
-            )
+            coloraxis_colorbar=dict(title="TWh", x=1.02),
+        )
+
+        fig_map.update_traces(
+            marker_line_color="white",
+            marker_line_width=1.2,
+            below="",
+            selector=dict(type="choroplethmap")
+        )
 
         st.plotly_chart(fig_map, width='stretch')
 
@@ -491,7 +471,7 @@ with tab3:
             x='MWh',
             nbins=50,
             color_discrete_sequence=[PRIMARY_COLOR],
-            opacity=0.8,
+            opacity=1,
         )
 
         fig_wh.update_layout(
@@ -505,6 +485,8 @@ with tab3:
             bargap=0.05,
             xaxis=dict(showgrid=False),
             yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
         )
         st.plotly_chart(fig_wh, width='content')
 
@@ -534,7 +516,7 @@ with tab3:
 
         fig_cf.update_layout(
             title=dict(text=None),
-            xaxis_title=None,
+            xaxis_title='years',
             yaxis_title='Average Capacity Factor (%)',
             template='plotly_dark',
             height=HEIGHT_3,
@@ -569,17 +551,17 @@ with tab3:
 # Fourth tab
 # ---------------------------------------------------
 with tab4:
-    monthly_vr_df = df_filtered.groupby(pd.Grouper(key='date', freq='ME'))[['TWh', 'visible_radiation']].mean().reset_index()
-    monthly_agg_vr_df = df_filtered.groupby('Month')[['TWh', 'visible_radiation']].mean().reset_index()
-    correlation = df_filtered['TWh'].corr(df_filtered['visible_radiation'])
+    monthly_vr_df = df_filtered.groupby(pd.Grouper(key='date', freq='ME'))[['production_per_capacity', 'visible_radiation']].mean().reset_index()
+    monthly_agg_vr_df = df_filtered.groupby('Month')[['production_per_capacity', 'visible_radiation']].mean().reset_index()
+    correlation = df_filtered['production_per_capacity'].corr(df_filtered['visible_radiation'])
 
 
     col1, col2, col3 = st.columns(3)
     with col1:
         with st.container(border=True):
-            st.markdown(f"{svg_to_img('sun.svg')} **Correlation · Solar Production vs Visible Radiation**", unsafe_allow_html=True)
+            st.markdown(f"{svg_to_img('sun.svg')} **Correlation · Solar Prod. Per Capacity vs Visible Radiation**", unsafe_allow_html=True)
             st.metric(
-                label='Correlation · Solar Production vs Visible Radiation',
+                label='Correlation · Solar Production Per Capacity vs Visible Radiation',
                 value=f'{correlation:.2f}',
                 label_visibility='hidden',
             )
@@ -588,14 +570,14 @@ with tab4:
     
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown(f"**Visible Radiation vs Solar Production Trend**", unsafe_allow_html=True)
+        st.markdown(f"**Visible Radiation vs Solar Production Per Capacity Trend**", unsafe_allow_html=True)
         fig_dual = go.Figure()
 
         fig_dual.add_trace(go.Scatter(
             x=monthly_vr_df['date'], 
-            y=monthly_vr_df['TWh'],
+            y=monthly_vr_df['production_per_capacity'],
             mode='lines+markers', 
-            name='Solar Production',
+            name='Solar Production Per Capacity',
             line=dict(color=PRIMARY_COLOR, width=2.5),
             yaxis='y1',
         ))
@@ -612,7 +594,7 @@ with tab4:
         fig_dual.update_layout(
             title=dict(text=None),
             xaxis_title=None,
-            yaxis=dict(title='Production (TWh)', 
+            yaxis=dict(title='Production Per Capacity', 
                        color=PRIMARY_COLOR),
             yaxis2=dict(title='Visible Radiation (J/cm²)', 
                         color=SECONDARY_COLOR,
@@ -636,14 +618,14 @@ with tab4:
         st.plotly_chart(fig_dual, width='content')
 
     with col2:
-        st.markdown(f"**Visible Radiation vs Solar Production Per Month**", unsafe_allow_html=True)
+        st.markdown(f"**Visible Radiation vs Solar Production Per Capacity Per Month**", unsafe_allow_html=True)
         fig_dual_month = go.Figure()
 
         fig_dual_month.add_trace(go.Scatter(
             x=monthly_agg_vr_df['Month'], 
-            y=monthly_agg_vr_df['TWh'],
+            y=monthly_agg_vr_df['production_per_capacity'],
             mode='lines+markers', 
-            name='Solar Production',
+            name='Solar Production Per Capacity',
             line=dict(color=PRIMARY_COLOR, width=2.5),
             yaxis='y1'
         ))
@@ -663,7 +645,7 @@ with tab4:
                 tickvals=list(range(1, 13)),
                 ticktext=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
             ),
-            yaxis=dict(title='Production (TWh)', color=PRIMARY_COLOR),
+            yaxis=dict(title='Production Per Capacity', color=PRIMARY_COLOR),
             yaxis2=dict(title='Visible Radiation (J/cm²)', 
                         color=SECONDARY_COLOR,
                         overlaying='y', 
@@ -717,9 +699,8 @@ with tab5:
     installation_growth = (total_max_installations - total_min_installations) * 100 / total_min_installations
     capacity_growth = (total_max_capacity - total_min_capacity) * 100 / total_min_capacity      
 
-    
-    df_filtered['Year']  = df_filtered['date'].dt.year
-    df_filtered['Month'] = df_filtered['date'].dt.month
+    # df_filtered['Year']  = df_filtered['date'].dt.year
+    # df_filtered['Month'] = df_filtered['date'].dt.month
 
     yearly_deploy_df = (df_filtered
         .groupby('Year')[['installation_number', 'capacity_power']]
@@ -731,7 +712,11 @@ with tab5:
         .mean()
         .reset_index()
     )
-    growth_label = f'{min(full_years)} → {max(full_years)}'
+
+    if full_years:
+        growth_label = f'{min(full_years)} → {max(full_years)}'
+    else:
+        growth_label = 'n/a'
 
     # --- KPIs ----------------------------------
     col1, col2, col3, col4 = st.columns(4)
