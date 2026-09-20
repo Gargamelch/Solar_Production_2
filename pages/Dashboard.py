@@ -137,7 +137,7 @@ with st.sidebar:
                 font-weight: 700;
                 text-decoration: none;
             ">GPL-3.0</a>
-            <a href="https://github.com/Gargamelch/Solar_Production" target="_blank" style="
+            <a href="https://github.com/Gargamelch/Solar_Production_2" target="_blank" style="
                 background: #0A0E1A;
                 color: white;
                 padding: 2px 10px;
