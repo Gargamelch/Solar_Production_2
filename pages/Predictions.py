@@ -35,6 +35,11 @@ geojson = load_geojson()
 SOL_PROD = 'production_solaire/m2(en Kwh)'
 SOL_PROD_PRED  = 'production_solaire/m2(en Kwh) J+1 predit'
 
+df_sorted = solar_prod_df.sort_values(["region", "date"])
+prev_pred_valid = df_sorted.groupby("region")[SOL_PROD_PRED].shift(1).notna()
+valid_dates = df_sorted.loc[prev_pred_valid, "date"]
+min_selectable_date = valid_dates.min().date() if not valid_dates.empty else solar_prod_df["date"].min().date()
+
 # ---------------------------------------------------
 # Sidebar filters
 # ---------------------------------------------------
@@ -45,7 +50,7 @@ with st.sidebar:
     selected_date = st.date_input(
         "Select day",
         value=default_date,
-        min_value=solar_prod_df["date"].min().date(),
+        min_value=min_selectable_date,
         # Adding only 1 days doesn't do the trick to select the next day: we need to add 2
         max_value=(solar_prod_df["date"].max() + pd.Timedelta(days=2)).date()
     )
