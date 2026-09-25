@@ -146,7 +146,7 @@ with st.sidebar:
                 font-weight: 700;
                 text-decoration: none;
             ">{svg_to_img('github.svg', color='white', width=14)} GitHub</a>
-            <span style="color: gray; font-size: 0.75rem;"
+             </div>
     """, unsafe_allow_html=True)
     
 
@@ -218,7 +218,7 @@ with tab1:
     # Evolution
     with col3:
         with st.container(border=True):
-            st.markdown(f"{svg_to_img('charts.svg')} **Evolution (MWh) {year_min} → {year_max}**", unsafe_allow_html=True)
+            st.markdown(f"{svg_to_img('charts.svg')} **MWh Growth (%) {year_min} → {year_max}**", unsafe_allow_html=True)
             delta_color = 'normal' if len(full_years) >= 2 else 'off'
             st.metric(
                 label=f'Evolution (MWh)',
@@ -516,7 +516,7 @@ with tab3:
 
         fig_cf.update_layout(
             title=dict(text=None),
-            xaxis_title='years',
+            xaxis_title='Date',
             yaxis_title='Average Capacity Factor (%)',
             template='plotly_dark',
             height=HEIGHT_3,

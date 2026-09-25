@@ -156,7 +156,7 @@ with st.sidebar:
                 font-weight: 700;
                 text-decoration: none;
             ">{svg_to_img('github.svg', color='white', width=14)} GitHub</a>
-            <span style="color: gray; font-size: 0.75rem;"
+            </div>
     """, unsafe_allow_html=True)
 
 # ---------------------------------------------------
