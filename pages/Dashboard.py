@@ -211,7 +211,7 @@ with tab1:
             st.markdown(f"{svg_to_img('prod.svg')} **Daily Average (MWh)**", unsafe_allow_html=True)
             st.metric(
                 label='Daily Average (MWh)',
-                value=f'{daily_avg:.2f}',
+                value=f'{daily_avg:,.0f}',
                 label_visibility='hidden',
             )
 
@@ -233,7 +233,7 @@ with tab1:
             st.markdown(f"{svg_to_img('panel.svg')} **Average Power Capacity (MW)**", unsafe_allow_html=True)
             st.metric(
                 label='Average Power Capacity',
-                value=f'{avg_capacity:.2f}',
+                value=f'{avg_capacity:,.0f}',
                 label_visibility='hidden',
             )
 
