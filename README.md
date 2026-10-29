@@ -237,7 +237,8 @@ An internet connection is needed: the datasets and the region GeoJSON are downlo
 ---
 
 ## 🐳 Docker
-### Create a Dockerfile to run the app locally:
+### The app runs on Hugging Face spaces, but you can also run it locally with Docker.
+The repository's `Dockerfile` is configured for Hugging Face (port 7860), so create a new `Dockerfile`:
 ```dockerfile
 FROM anaconda/miniconda:26.3.2
 
@@ -246,7 +247,7 @@ RUN apt-get update -y
 RUN apt-get install nano unzip curl -y
 
 # Install dependencies
-COPY requirements.txt requirements.txt
+COPY requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt
 
 # Set working directory
@@ -258,7 +259,6 @@ COPY utils.py /app/utils.py
 COPY pages/ /app/pages/
 COPY .streamlit/ /app/.streamlit/
 COPY static/ /app/static/
-COPY requirements.txt /app/requirements.txt
 
 CMD ["python", "-m", "streamlit", "run", "app.py", \
      "--server.port=8501", \
@@ -342,7 +342,7 @@ Hold-out test set (2024-01 → 2026-01) and mean over the 5 cross-validation fol
 
 | Model | Test R² | Test MAE | Test RMSE | CV R² (mean) | CV RMSE (mean) |
 |-------|---------|----------|-----------|--------------|----------------|
-| Naive baseline (J+1 = today) | 0.708 | 316.5 | 436.5 | 0.657 | - |
+| Naive baseline (J+1 = today) | 0.708 | 316.5 | 436.5 | 0.657 | 423.6 |
 | Linear Regression, raw features | 0.761 | 300.9 | 395.2 | 0.675 | 406.5 |
 | Linear Regression + lags | 0.778 | 287.5 | 380.5 | 0.706 | 389.7 |
 | Linear Regression, full features | 0.792 | 279.4 | 368.5 | 0.726 | 377.2 |
@@ -356,7 +356,7 @@ Hold-out test set (2024-01 → 2026-01) and mean over the 5 cross-validation fol
 ### Why Ridge?
 
 The top models are within one fold standard deviation of each other, so none is clearly better. Ridge was chosen because it is:
-- **Stable** across folds, with no overfitting (unlike Random Forest: train R² 0.87 vs test 0.80)
+- **Stable** across folds, with a small train/test gap (0.025 in CV vs 0.115 for Random Forest)
 - **Robust to multicollinearity**: many weather variables are strongly correlated (e.g. `rainfall` and `effective_rainfall`), which makes plain linear regression coefficients unstable
 - **Simple and interpretable**, and fast enough to retrain easily
 
