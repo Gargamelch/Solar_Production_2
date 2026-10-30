@@ -82,7 +82,7 @@ The app includes two pages:
 ├── 📁 static                          ← Logos and SVG icons
 ├── 📁 .streamlit                      ← Streamlit configuration
 ├── 📓 RTE_concat.ipynb                ← Aggregates raw RTE files per year
-├── 📓 solar_production_v35.ipynb      ← Data preparation, EDA and machine learning
+├── 📓 solar_production_v36.ipynb      ← Data preparation, EDA and machine learning
 └── 📁 data                            ← Raw data (not needed to run the app)
     ├── 📁 coordinates
     │   ├── 📄 departements-20180101.shp
@@ -111,7 +111,7 @@ The app includes two pages:
 | ⚡ [RTE eCO2mix](https://www.rte-france.com/donnees-publications/eco2mix-donnees-temps-reel/telecharger-indicateurs) | Solar electricity production by region (half-hourly) | `.xls` (tab-separated) | 2020–2026 |
 | 🌤️ [Météo-France SIM2](https://www.data.gouv.fr/datasets/donnees-changement-climatique-sim-quotidienne) | Daily meteorological data on an 8 km grid | `.csv` | 2020–2026 |
 | ☀️ [SDES](https://www.statistiques.developpement-durable.gouv.fr/tableau-de-bord-solaire-photovoltaique-premier-trimestre-2026) | Quarterly number of installations and installed capacity by region | `.xlsx` | 2020–2026 |
-| 🗺️ [OpenStreetMap / data.gouv.fr](https://www.data.gouv.fr/datasets/contours-des-departements-francais-issus-d-openstreetmap) | French département boundaries (shapefile) | `.shp` | - |
+| 🗺️ [OpenStreetMap / data.gouv.fr](https://www.data.gouv.fr/datasets/contours-des-departements-francais-issus-d-openstreetmap) | French département boundaries (shapefile), © OpenStreetMap contributors, [ODbL](https://opendatacommons.org/licenses/odbl/) | `.shp` | - |
 | 🗺️ [france-geojson](https://github.com/gregoiredavid/france-geojson) | Simplified region boundaries for the map | `.geojson` | - |
 
 ---
@@ -119,7 +119,7 @@ The app includes two pages:
 ## ⚙️ Data Pipeline
 
 1. **RTE_concat.ipynb**: merges the 12 regional RTE files into one CSV per year (2013–2024) plus the current, not yet final, data (`en_cours`).
-2. **solar_production_v35.ipynb**:
+2. **solar_production_v36.ipynb**:
    - Loads RTE data, converts half-hourly MW values into daily **TWh** per region
    - Loads SDES installations (quarterly) and forward-fills them to a daily frequency
    - Converts the Météo-France grid coordinates (Lambert II étendu, EPSG:27572) to GPS (EPSG:4326) and assigns each grid point to a département, then to a region, using a spatial join (nearest département for points on borders or coasts)
@@ -308,7 +308,7 @@ Same-day production columns (`solar`, `TWh`, `installation_number`, `capacity_po
 ### Feature selection
 
 - **Lags**: ACF and PACF of the national radiation series show a strong lag-1 effect. 3, 5, 10 and 30 lags were compared: gains beyond 3 lags are within the fold-to-fold variation, so **3 lags** were kept.
-- **Yearly lag (J-365)**: tested and **not kept**. It brings no improvement: seasonality is already encoded by `day_sin`/`day_cos`, last year's weather on a given day has no predictive value, and the lag removes a full year of training data.
+- **Yearly lag (J-365)**: tested and **not kept**. It worsened the hold-out score (R² 0.764 vs 0.778) and removes a full year of training data. The yearly cycle is instead captured by the `day_sin`/`day_cos` encoding, which improved R² from 0.778 to 0.792.
 
 ### Pipeline
 
@@ -348,6 +348,7 @@ Hold-out test set (2024-01 → 2026-01) and mean over the 5 cross-validation fol
 | Linear Regression, full features | 0.792 | 279.4 | 368.5 | 0.726 | 377.2 |
 | Lasso (alpha = 2) | 0.788 | 281.5 | 371.7 | 0.742 | 368.5 |
 | **Ridge (alpha = 200)** | **0.789** | **282.0** | **371.4** | **0.742** | **369.0** |
+| Ridge, simplified (7 variables) | 0.776 | 287.9 | 382.4 | 0.734 | 374.7 |
 | Random Forest | 0.800 | 273.8 | 361.6 | 0.740 | 369.1 |
 | XGBoost | 0.801 | 272.1 | 360.5 | 0.748 | 363.7 |
 
@@ -359,6 +360,8 @@ The top models are within one fold standard deviation of each other, so none is 
 - **Stable** across folds, with a small train/test gap (0.025 in CV vs 0.115 for Random Forest)
 - **Robust to multicollinearity**: many weather variables are strongly correlated (e.g. `rainfall` and `effective_rainfall`), which makes plain linear regression coefficients unstable
 - **Simple and interpretable**, and fast enough to retrain easily
+
+A simplified Ridge with 7 variables reaches almost the same score (CV R² 0.734 vs 0.742): most of the signal comes from a few variables, and Ridge handles the redundancy of the others.
 
 ### Final model evaluation
 
@@ -384,4 +387,4 @@ Most important variables: `visible_radiation`, `day_cos`, `daily_avg_temp`, `atm
 - Per-m² production is a **theoretical estimate** assuming **20% panel efficiency**. It does not account for panel orientation, shading, temperature or equipment age.
 - The model predicts the next day from **observed** weather data. A real operational forecast would use weather forecasts, as SIM2 data is published with a delay.
 - The exported predictions come from the model trained on data before 2024: predictions for 2020–2023 are **in-sample** and will look better than genuine forecasts. Predictions from 2024 onward are out-of-sample.
-- The Predictions page allows one day after the last available data (prediction only) and a second day with neither data nor prediction.
+- The Predictions page extends two days beyond the last available data. Day +1 shows the forecast only, since there’s no actual value yet to compare with. Day +2 has neither data nor prediction and is kept on purpose, to show that the app handles out-of-range dates without crashing.
